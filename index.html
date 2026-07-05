@@ -170,6 +170,12 @@
     border-color: #7C6BB0;
     font-weight: 600;
   }
+  button.name-btn.selected-pink {
+    background: #E58BAA;
+    color: #4B1528;
+    border-color: #C15E82;
+    font-weight: 600;
+  }
   button.name-btn.selected-gray {
     background: #E4DFCF;
     color: #4A4736;
@@ -343,7 +349,7 @@
 </div>
 
 <script type="module">
-const COUPLES = ["Alex & Rachel", "Laine & Jana", "Wesley & Val"];
+const COUPLES = ["Alex & Rachel", "Laine & Jana", "Wesley & Val", "Jean & Scott"];
 const FREEFORM = "Freeform";
 
 const DAYS = [
@@ -415,6 +421,7 @@ function rampClass(name){
   if (name === COUPLES[0]) return "selected-teal";
   if (name === COUPLES[1]) return "selected-coral";
   if (name === COUPLES[2]) return "selected-purple";
+  if (name === COUPLES[3]) return "selected-pink";
   return "";
 }
 
