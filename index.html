@@ -501,9 +501,10 @@ async function initFirebase(){
     const db = getFirestore(app);
     const boardRef = doc(db, "lakehouse", "board");
 
-    async function saveField(path, value){
+    async function saveField(section, key, value){
       const update = {};
-      update[path] = value;
+      update[section] = {};
+      update[section][key] = value;
       try {
         await setDoc(boardRef, update, { merge: true });
       } catch(e){
@@ -516,11 +517,11 @@ async function initFirebase(){
       state[id] = val;
       if (!val || val === FREEFORM){
         dishState[id] = "";
-        saveField("slots." + id, val);
-        saveField("dishes." + id, "");
+        saveField("slots", id, val);
+        saveField("dishes", id, "");
       } else {
         if (val !== MEAL_DEFAULTS[id]) editingDish[id] = true;
-        saveField("slots." + id, val);
+        saveField("slots", id, val);
       }
       render();
     };
@@ -528,13 +529,13 @@ async function initFirebase(){
     setDish = function(id, val){
       dishState[id] = val;
       editingDish[id] = false;
-      saveField("dishes." + id, val);
+      saveField("dishes", id, val);
       render();
     };
 
     setSnack = function(name, val){
       snackState[name] = val;
-      saveField("snacks." + name, val);
+      saveField("snacks", name, val);
     };
 
     document.getElementById("reset-btn").addEventListener("click", async function(){
