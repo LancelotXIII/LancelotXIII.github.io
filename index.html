@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lake House Menu Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #EEF2ED;
+    color: #2B2924;
+    margin: 0;
+    padding: 32px 16px 60px;
+  }
+  .wrap {
+    max-width: 920px;
+    margin: 0 auto;
+  }
+  .header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .title {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 26px;
+    font-weight: 600;
+    color: #1E3F35;
+    letter-spacing: -0.01em;
+  }
+  .dates {
+    font-size: 13px;
+    color: #6E6A5C;
+    font-weight: 500;
+  }
+  .ripples {
+    display: block;
+    width: 100%;
+    height: 14px;
+    margin-bottom: 16px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #55523F;
+    margin-bottom: 8px;
+  }
+  .sync-status {
+    font-size: 12px;
+    color: #6E6A5C;
+    margin-bottom: 24px;
+  }
+  .sync-status.live::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #4E9B7F;
+    margin-right: 6px;
+  }
+  .sync-status.offline::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #C3502F;
+    margin-right: 6px;
+  }
+  .layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .main-col {
+    flex: 1 1 480px;
+    min-width: 0;
+  }
+  .side-col {
+    flex: 0 1 280px;
+    min-width: 260px;
+  }
+  .day {
+    margin-bottom: 24px;
+  }
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .day-label {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1E3F35;
+  }
+  .day-sub {
+    font-size: 11px;
+    color: #8A5A2E;
+    background: #F4E6D3;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-weight: 500;
+  }
+  .card {
+    border: 1px solid #DCD5C4;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #FFFDF7;
+  }
+  .slot {
+    padding: 12px 16px;
+    border-bottom: 1px solid #EDE7D8;
+  }
+  .slot:last-child {
+    border-bottom: none;
+  }
+  .slot-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .meal-label {
+    font-size: 13px;
+    color: #55522F;
+    min-width: 64px;
+    font-weight: 600;
+  }
+  .options {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    flex: 1;
+    justify-content: flex-end;
+  }
+  button.name-btn {
+    border: 1px solid #DCD5C4;
+    border-radius: 8px;
+    padding: 6px 11px;
+    font-size: 12px;
+    background: #FFFFFF;
+    color: #4A4736;
+    cursor: pointer;
+    font-family: "Inter", inherit;
+  }
+  button.name-btn:hover {
+    border-color: #B7AE93;
+  }
+  button.name-btn.selected-teal {
+    background: #6FBBA0;
+    color: #10382C;
+    border-color: #3F8B6F;
+    font-weight: 600;
+  }
+  button.name-btn.selected-coral {
+    background: #E8926B;
+    color: #4A2210;
+    border-color: #C06A3F;
+    font-weight: 600;
+  }
+  button.name-btn.selected-purple {
+    background: #A79AD1;
+    color: #2B2159;
+    border-color: #7C6BB0;
+    font-weight: 600;
+  }
+  button.name-btn.selected-gray {
+    background: #E4DFCF;
+    color: #4A4736;
+    border-color: #BDB498;
+    font-weight: 600;
+  }
+  .status-line {
+    font-size: 12px;
+    color: #8A8570;
+    margin-top: 7px;
+  }
+  .status-line .clear-link {
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 4px;
+  }
+  .dish-row {
+    margin-top: 8px;
+  }
+  input.dish-input {
+    width: 100%;
+    font-size: 13px;
+    font-family: "Inter", inherit;
+    padding: 8px 11px;
+    border: 1px solid #DCD5C4;
+    border-radius: 8px;
+    background: #FBF8F0;
+    color: #2B2924;
+  }
+  input.dish-input:focus {
+    outline: none;
+    border-color: #8A5A2E;
+    background: #FFFFFF;
+  }
+  .dish-display {
+    font-size: 13px;
+    color: #2B2924;
+    margin-top: 7px;
+    font-style: italic;
+  }
+  .dish-display .edit-link {
+    font-style: normal;
+    text-decoration: underline;
+    cursor: pointer;
+    color: #8A8570;
+    margin-left: 6px;
+  }
+  .side-title {
+    font-family: "Fraunces", Georgia, serif;
+    font-size: 17px;
+    font-weight: 600;
+    color: #1E3F35;
+    margin-bottom: 8px;
+  }
+  .side-sub {
+    font-size: 12px;
+    color: #6E6A5C;
+    margin-bottom: 10px;
+  }
+  #snacks.card {
+    border-top: 3px solid #E3A73E;
+  }
+  .snack-row {
+    padding: 13px 16px;
+    border-bottom: 1px solid #EDE7D8;
+  }
+  .snack-row:last-child {
+    border-bottom: none;
+  }
+  .snack-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #55522F;
+    margin-bottom: 7px;
+  }
+  .footer {
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid #DCD5C4;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .progress {
+    font-size: 13px;
+    color: #6E6A5C;
+  }
+  button.reset-btn {
+    font-size: 13px;
+    border: 1px solid #DCD5C4;
+    background: #FFFDF7;
+    color: #4A4736;
+    border-radius: 8px;
+    padding: 7px 14px;
+    cursor: pointer;
+    font-family: "Inter", inherit;
+  }
+  button.reset-btn:hover {
+    border-color: #B7AE93;
+  }
+  @media (max-width: 700px) {
+    .side-col { flex-basis: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="title">Lake house menu board</div>
+    <div class="dates">July 16 &ndash; 19</div>
+  </div>
+  <svg class="ripples" viewBox="0 0 920 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,7 Q15,0 30,7 T60,7 T90,7 T120,7 T150,7 T180,7 T210,7 T240,7 T270,7 T300,7 T330,7 T360,7 T390,7 T420,7 T450,7 T480,7 T510,7 T540,7 T570,7 T600,7 T630,7 T660,7 T690,7 T720,7 T750,7 T780,7 T810,7 T840,7 T870,7 T900,7 T930,7" fill="none" stroke="#B9CFC6" stroke-width="2"/>
+  </svg>
+  <div class="subtitle">Tap a name to claim a slot. Breakfast defaults to Freeform, which counts as its own option and skips the dish note.</div>
+  <div class="sync-status" id="sync-status">Loading board&hellip;</div>
+
+  <div class="layout">
+    <div class="main-col">
+      <div id="board"></div>
+    </div>
+    <div class="side-col">
+      <div class="side-title">Snacks</div>
+      <div class="side-sub">Everyone brings something. Note what you've got below.</div>
+      <div class="card" id="snacks"></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span class="progress" id="progress">0 of 6 slots claimed</span>
+    <button class="reset-btn" id="reset-btn">Reset all</button>
+  </div>
+</div>
+
+<script type="module">
+const COUPLES = ["Alex & Rachel", "Laine & Jana", "Wesley & Val"];
+const FREEFORM = "Freeform";
+
+const DAYS = [
+  { key: "d16", label: "Wed, July 16", sub: "Check-in, afternoon", meals: [
+    { key: "dinner", label: "Dinner", options: COUPLES, default: "" }
+  ]},
+  { key: "d17", label: "Thu, July 17", sub: "", meals: [
+    { key: "breakfast", label: "Breakfast", options: COUPLES.concat([FREEFORM]), default: FREEFORM },
+    { key: "lunch", label: "Lunch", options: COUPLES, default: "" },
+    { key: "dinner", label: "Dinner", options: COUPLES, default: "" }
+  ]},
+  { key: "d18", label: "Fri, July 18", sub: "", meals: [
+    { key: "breakfast", label: "Breakfast", options: COUPLES.concat([FREEFORM]), default: FREEFORM },
+    { key: "lunch", label: "Lunch", options: COUPLES, default: "" },
+    { key: "dinner", label: "Dinner", options: COUPLES, default: "" }
+  ]},
+  { key: "d19", label: "Sat, July 19", sub: "Check-out morning", meals: [
+    { key: "breakfast", label: "Breakfast", options: COUPLES.concat([FREEFORM]), default: FREEFORM }
+  ]}
+];
+
+const MEAL_DEFAULTS = {};
+const MEAL_OPTIONS = {};
+DAYS.forEach(function(d){
+  d.meals.forEach(function(m){
+    const id = d.key + "-" + m.key;
+    MEAL_DEFAULTS[id] = m.default || "";
+    MEAL_OPTIONS[id] = m.options;
+  });
+});
+
+let slotIds = [];
+DAYS.forEach(function(d){ d.meals.forEach(function(m){ slotIds.push(d.key + "-" + m.key); }); });
+const claimableCount = slotIds.filter(function(id){ return !MEAL_DEFAULTS[id]; }).length;
+
+let state = {};
+let dishState = {};
+let snackState = {};
+let editingDish = {};
+
+slotIds.forEach(function(id){ state[id] = MEAL_DEFAULTS[id] || ""; dishState[id] = ""; });
+COUPLES.forEach(function(name){ snackState[name] = ""; });
+
+function setStatus(text, cls){
+  const el = document.getElementById("sync-status");
+  el.textContent = text;
+  el.className = "sync-status " + cls;
+}
+
+function rampClass(name){
+  if (name === FREEFORM) return "selected-gray";
+  if (name === COUPLES[0]) return "selected-teal";
+  if (name === COUPLES[1]) return "selected-coral";
+  if (name === COUPLES[2]) return "selected-purple";
+  return "";
+}
+
+function render(){
+  const board = document.getElementById("board");
+  let html = "";
+  let claimed = 0;
+
+  DAYS.forEach(function(d){
+    html += '<div class="day">';
+    html += '<div class="day-header">';
+    html += '<span class="day-label">' + d.label + '</span>';
+    if (d.sub) html += '<span class="day-sub">' + d.sub + '</span>';
+    html += '</div>';
+
+    html += '<div class="card">';
+    d.meals.forEach(function(m){
+      const id = d.key + "-" + m.key;
+      const current = state[id] || "";
+      const isDefault = current === MEAL_DEFAULTS[id];
+      if (current && !isDefault) claimed++;
+
+      html += '<div class="slot">';
+      html += '<div class="slot-row">';
+      html += '<span class="meal-label">' + m.label + '</span>';
+      html += '<div class="options">';
+      MEAL_OPTIONS[id].forEach(function(name){
+        const selected = current === name;
+        const cls = selected ? "name-btn " + rampClass(name) : "name-btn";
+        html += '<button class="' + cls + '" data-slot="' + id + '" data-name="' + name + '">' + name + '</button>';
+      });
+      html += '</div></div>';
+
+      if (current === FREEFORM){
+        html += '<div class="status-line">Freeform, grab what you need</div>';
+      } else if (current && !isDefault){
+        html += '<div class="status-line">Claimed by ' + current + '.<span class="clear-link" data-slot="' + id + '" data-default="' + (MEAL_DEFAULTS[id] || "") + '">Clear</span></div>';
+        const dish = dishState[id] || "";
+        if (dish && !editingDish[id]){
+          html += '<div class="dish-display">Making: ' + dish + '<span class="edit-link" data-dish-edit="' + id + '">Edit</span></div>';
+        } else {
+          html += '<div class="dish-row"><input type="text" class="dish-input" placeholder="What are you making? (optional)" data-dish-input="' + id + '" value="' + dish.replace(/"/g, "&quot;") + '"></div>';
+        }
+      } else {
+        html += '<div class="status-line">Open</div>';
+      }
+      html += '</div>';
+    });
+    html += '</div>';
+    html += '</div>';
+  });
+
+  board.innerHTML = html;
+  document.getElementById("progress").textContent = claimed + " of " + claimableCount + " slots claimed";
+
+  board.querySelectorAll("button[data-slot]").forEach(function(b){
+    b.addEventListener("click", function(){
+      setSlot(b.getAttribute("data-slot"), b.getAttribute("data-name"));
+    });
+  });
+  board.querySelectorAll(".clear-link").forEach(function(c){
+    c.addEventListener("click", function(){
+      setSlot(c.getAttribute("data-slot"), c.getAttribute("data-default") || "");
+    });
+  });
+  board.querySelectorAll("input[data-dish-input]").forEach(function(inp){
+    const id = inp.getAttribute("data-dish-input");
+    inp.addEventListener("blur", function(){
+      setDish(id, inp.value.trim());
+    });
+    inp.addEventListener("keydown", function(e){
+      if (e.key === "Enter") inp.blur();
+    });
+    if (editingDish[id]) inp.focus();
+  });
+  board.querySelectorAll("[data-dish-edit]").forEach(function(el){
+    el.addEventListener("click", function(){
+      editingDish[el.getAttribute("data-dish-edit")] = true;
+      render();
+    });
+  });
+}
+
+function renderSnacks(){
+  const box = document.getElementById("snacks");
+  let html = "";
+  COUPLES.forEach(function(name){
+    const val = snackState[name] || "";
+    html += '<div class="snack-row">';
+    html += '<div class="snack-name">' + name + '</div>';
+    html += '<input type="text" class="dish-input" placeholder="What are you bringing?" data-snack-input="' + name + '" value="' + val.replace(/"/g, "&quot;") + '">';
+    html += '</div>';
+  });
+  box.innerHTML = html;
+
+  box.querySelectorAll("input[data-snack-input]").forEach(function(inp){
+    const name = inp.getAttribute("data-snack-input");
+    inp.addEventListener("blur", function(){
+      setSnack(name, inp.value.trim());
+    });
+    inp.addEventListener("keydown", function(e){
+      if (e.key === "Enter") inp.blur();
+    });
+  });
+}
+
+// Draw the board immediately with defaults, before Firebase even loads,
+// so the page is never blank even if the sync setup below has trouble.
+render();
+renderSnacks();
+
+let setSlot = function(){};
+let setDish = function(){};
+let setSnack = function(){};
+
+async function initFirebase(){
+  try {
+    const firebaseConfig = {
+      apiKey: "AIzaSyB1jL6uBxE7QgbjoMs8EVsZAk_wzTJfsK0",
+      authDomain: "lake-house-2026.firebaseapp.com",
+      projectId: "lake-house-2026",
+      storageBucket: "lake-house-2026.firebasestorage.app",
+      messagingSenderId: "315975091403",
+      appId: "1:315975091403:web:affde3367f938d78b6074e",
+      measurementId: "G-GY8QG9J45H"
+    };
+
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
+    const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const boardRef = doc(db, "lakehouse", "board");
+
+    async function saveField(path, value){
+      const update = {};
+      update[path] = value;
+      try {
+        await setDoc(boardRef, update, { merge: true });
+      } catch(e){
+        console.error("save failed", e);
+        setStatus("Offline, changes will not save: " + e.message, "offline");
+      }
+    }
+
+    setSlot = function(id, val){
+      state[id] = val;
+      if (!val || val === FREEFORM){
+        dishState[id] = "";
+        saveField("slots." + id, val);
+        saveField("dishes." + id, "");
+      } else {
+        if (val !== MEAL_DEFAULTS[id]) editingDish[id] = true;
+        saveField("slots." + id, val);
+      }
+      render();
+    };
+
+    setDish = function(id, val){
+      dishState[id] = val;
+      editingDish[id] = false;
+      saveField("dishes." + id, val);
+      render();
+    };
+
+    setSnack = function(name, val){
+      snackState[name] = val;
+      saveField("snacks." + name, val);
+    };
+
+    document.getElementById("reset-btn").addEventListener("click", async function(){
+      const slots = {};
+      const dishes = {};
+      const snacks = {};
+      slotIds.forEach(function(id){ slots[id] = MEAL_DEFAULTS[id] || ""; dishes[id] = ""; });
+      COUPLES.forEach(function(name){ snacks[name] = ""; });
+      try {
+        await setDoc(boardRef, { slots: slots, dishes: dishes, snacks: snacks }, { merge: false });
+      } catch(e){
+        console.error(e);
+        setStatus("Offline, changes will not save: " + e.message, "offline");
+      }
+    });
+
+    onSnapshot(boardRef, function(snap){
+      const data = snap.exists() ? snap.data() : {};
+      const slots = data.slots || {};
+      const dishes = data.dishes || {};
+      const snacks = data.snacks || {};
+
+      slotIds.forEach(function(id){
+        state[id] = (id in slots) ? slots[id] : (MEAL_DEFAULTS[id] || "");
+        dishState[id] = dishes[id] || "";
+      });
+      COUPLES.forEach(function(name){
+        snackState[name] = snacks[name] || "";
+      });
+
+      setStatus("Live, synced with everyone", "live");
+      render();
+      renderSnacks();
+    }, function(err){
+      console.error(err);
+      setStatus("Offline, changes will not save: " + err.message, "offline");
+    });
+
+  } catch (e) {
+    console.error("Firebase failed to load", e);
+    setStatus("Sync failed to load: " + e.message + ". Picks below will not save.", "offline");
+  }
+}
+
+initFirebase();
+</script>
+</body>
+</html>
