@@ -14,7 +14,7 @@
     background: #EEF2ED;
     color: #2B2924;
     margin: 0;
-    padding: 32px 16px 60px;
+    padding: 32px 16px 90px;
   }
   .wrap {
     max-width: 920px;
@@ -56,24 +56,19 @@
     color: #6E6A5C;
     margin-bottom: 24px;
   }
-  .sync-status.live::before {
-    content: "";
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #4E9B7F;
-    margin-right: 6px;
-  }
+  .sync-status.live::before,
+  .sync-status.dirty::before,
   .sync-status.offline::before {
     content: "";
     display: inline-block;
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #C3502F;
     margin-right: 6px;
   }
+  .sync-status.live::before { background: #4E9B7F; }
+  .sync-status.dirty::before { background: #E3A73E; }
+  .sync-status.offline::before { background: #C3502F; }
   .layout {
     display: flex;
     gap: 24px;
@@ -250,32 +245,62 @@
     color: #55522F;
     margin-bottom: 7px;
   }
-  .footer {
-    margin-top: 28px;
-    padding-top: 18px;
+  .savebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #FFFDF7;
     border-top: 1px solid #DCD5C4;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: center;
+  }
+  .savebar-inner {
+    width: 100%;
+    max-width: 920px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     flex-wrap: wrap;
+  }
+  .savebar-left {
+    display: flex;
     gap: 8px;
+    align-items: center;
   }
-  .progress {
-    font-size: 13px;
+  button.save-btn {
+    font-size: 14px;
+    font-weight: 600;
+    font-family: "Inter", inherit;
+    border: none;
+    background: #1E3F35;
+    color: #FFFDF7;
+    border-radius: 8px;
+    padding: 10px 22px;
+    cursor: pointer;
+  }
+  button.save-btn:hover { background: #2A5647; }
+  button.save-btn:disabled {
+    background: #C9CFC7;
     color: #6E6A5C;
+    cursor: default;
   }
-  button.reset-btn {
+  button.ghost-btn {
     font-size: 13px;
     border: 1px solid #DCD5C4;
     background: #FFFDF7;
     color: #4A4736;
     border-radius: 8px;
-    padding: 7px 14px;
+    padding: 9px 14px;
     cursor: pointer;
     font-family: "Inter", inherit;
   }
-  button.reset-btn:hover {
-    border-color: #B7AE93;
+  button.ghost-btn:hover { border-color: #B7AE93; }
+  .progress {
+    font-size: 13px;
+    color: #6E6A5C;
   }
   @media (max-width: 700px) {
     .side-col { flex-basis: 100%; }
@@ -291,7 +316,7 @@
   <svg class="ripples" viewBox="0 0 920 14" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M0,7 Q15,0 30,7 T60,7 T90,7 T120,7 T150,7 T180,7 T210,7 T240,7 T270,7 T300,7 T330,7 T360,7 T390,7 T420,7 T450,7 T480,7 T510,7 T540,7 T570,7 T600,7 T630,7 T660,7 T690,7 T720,7 T750,7 T780,7 T810,7 T840,7 T870,7 T900,7 T930,7" fill="none" stroke="#B9CFC6" stroke-width="2"/>
   </svg>
-  <div class="subtitle">Tap a name to claim a slot. Breakfast defaults to Freeform, which counts as its own option and skips the dish note.</div>
+  <div class="subtitle">Tap a name to claim a slot, then hit Save. Breakfast defaults to Freeform, which counts as its own option and skips the dish note.</div>
   <div class="sync-status" id="sync-status">Loading board&hellip;</div>
 
   <div class="layout">
@@ -304,10 +329,16 @@
       <div class="card" id="snacks"></div>
     </div>
   </div>
+</div>
 
-  <div class="footer">
+<div class="savebar">
+  <div class="savebar-inner">
+    <div class="savebar-left">
+      <button class="save-btn" id="save-btn" disabled>Save changes</button>
+      <button class="ghost-btn" id="refresh-btn">Refresh</button>
+      <button class="ghost-btn" id="reset-btn">Reset all</button>
+    </div>
     <span class="progress" id="progress">0 of 6 slots claimed</span>
-    <button class="reset-btn" id="reset-btn">Reset all</button>
   </div>
 </div>
 
@@ -353,13 +384,30 @@ let dishState = {};
 let snackState = {};
 let editingDish = {};
 
+// Pending, unsaved local changes. Only these fields get written on Save,
+// so two people saving different slots won't clobber each other.
+let pending = { slots: {}, dishes: {}, snacks: {} };
+
 slotIds.forEach(function(id){ state[id] = MEAL_DEFAULTS[id] || ""; dishState[id] = ""; });
 COUPLES.forEach(function(name){ snackState[name] = ""; });
+
+function hasPending(){
+  return Object.keys(pending.slots).length > 0 ||
+         Object.keys(pending.dishes).length > 0 ||
+         Object.keys(pending.snacks).length > 0;
+}
 
 function setStatus(text, cls){
   const el = document.getElementById("sync-status");
   el.textContent = text;
   el.className = "sync-status " + cls;
+}
+
+function updateSaveState(){
+  document.getElementById("save-btn").disabled = !hasPending();
+  if (hasPending()){
+    setStatus("Unsaved changes, hit Save to share them", "dirty");
+  }
 }
 
 function rampClass(name){
@@ -368,6 +416,35 @@ function rampClass(name){
   if (name === COUPLES[1]) return "selected-coral";
   if (name === COUPLES[2]) return "selected-purple";
   return "";
+}
+
+function markSlot(id, val){
+  state[id] = val;
+  pending.slots[id] = val;
+  if (!val || val === FREEFORM){
+    dishState[id] = "";
+    pending.dishes[id] = "";
+  } else if (val !== MEAL_DEFAULTS[id]) {
+    editingDish[id] = true;
+  }
+  render();
+  updateSaveState();
+}
+
+function markDish(id, val){
+  if (dishState[id] === val && !(id in pending.dishes)) { editingDish[id] = false; render(); return; }
+  dishState[id] = val;
+  editingDish[id] = false;
+  pending.dishes[id] = val;
+  render();
+  updateSaveState();
+}
+
+function markSnack(name, val){
+  if (snackState[name] === val && !(name in pending.snacks)) return;
+  snackState[name] = val;
+  pending.snacks[name] = val;
+  updateSaveState();
 }
 
 function render(){
@@ -424,18 +501,18 @@ function render(){
 
   board.querySelectorAll("button[data-slot]").forEach(function(b){
     b.addEventListener("click", function(){
-      setSlot(b.getAttribute("data-slot"), b.getAttribute("data-name"));
+      markSlot(b.getAttribute("data-slot"), b.getAttribute("data-name"));
     });
   });
   board.querySelectorAll(".clear-link").forEach(function(c){
     c.addEventListener("click", function(){
-      setSlot(c.getAttribute("data-slot"), c.getAttribute("data-default") || "");
+      markSlot(c.getAttribute("data-slot"), c.getAttribute("data-default") || "");
     });
   });
   board.querySelectorAll("input[data-dish-input]").forEach(function(inp){
     const id = inp.getAttribute("data-dish-input");
     inp.addEventListener("blur", function(){
-      setDish(id, inp.value.trim());
+      markDish(id, inp.value.trim());
     });
     inp.addEventListener("keydown", function(e){
       if (e.key === "Enter") inp.blur();
@@ -465,7 +542,7 @@ function renderSnacks(){
   box.querySelectorAll("input[data-snack-input]").forEach(function(inp){
     const name = inp.getAttribute("data-snack-input");
     inp.addEventListener("blur", function(){
-      setSnack(name, inp.value.trim());
+      markSnack(name, inp.value.trim());
     });
     inp.addEventListener("keydown", function(e){
       if (e.key === "Enter") inp.blur();
@@ -473,14 +550,8 @@ function renderSnacks(){
   });
 }
 
-// Draw the board immediately with defaults, before Firebase even loads,
-// so the page is never blank even if the sync setup below has trouble.
 render();
 renderSnacks();
-
-let setSlot = function(){};
-let setDish = function(){};
-let setSnack = function(){};
 
 async function initFirebase(){
   try {
@@ -495,50 +566,74 @@ async function initFirebase(){
     };
 
     const { initializeApp } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-app.js");
-    const { getFirestore, doc, onSnapshot, setDoc } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
+    const { getFirestore, doc, getDoc, setDoc } = await import("https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js");
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const boardRef = doc(db, "lakehouse", "board");
 
-    async function saveField(section, key, value){
-      const update = {};
-      update[section] = {};
-      update[section][key] = value;
+    function applyRemote(data){
+      const slots = data.slots || {};
+      const dishes = data.dishes || {};
+      const snacks = data.snacks || {};
+      slotIds.forEach(function(id){
+        if (!(id in pending.slots)) state[id] = (id in slots) ? slots[id] : (MEAL_DEFAULTS[id] || "");
+        if (!(id in pending.dishes)) dishState[id] = dishes[id] || "";
+      });
+      COUPLES.forEach(function(name){
+        if (!(name in pending.snacks)) snackState[name] = snacks[name] || "";
+      });
+      render();
+      renderSnacks();
+    }
+
+    async function loadBoard(){
       try {
-        await setDoc(boardRef, update, { merge: true });
+        const snap = await getDoc(boardRef);
+        applyRemote(snap.exists() ? snap.data() : {});
+        if (hasPending()){
+          setStatus("Unsaved changes, hit Save to share them", "dirty");
+        } else {
+          setStatus("Up to date, refresh to see others' latest picks", "live");
+        }
       } catch(e){
-        console.error("save failed", e);
-        setStatus("Offline, changes will not save: " + e.message, "offline");
+        console.error(e);
+        setStatus("Could not load: " + e.message, "offline");
       }
     }
 
-    setSlot = function(id, val){
-      state[id] = val;
-      if (!val || val === FREEFORM){
-        dishState[id] = "";
-        saveField("slots", id, val);
-        saveField("dishes", id, "");
-      } else {
-        if (val !== MEAL_DEFAULTS[id]) editingDish[id] = true;
-        saveField("slots", id, val);
+    document.getElementById("save-btn").addEventListener("click", async function(){
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = "Saving\u2026";
+      const update = {};
+      if (Object.keys(pending.slots).length) update.slots = pending.slots;
+      if (Object.keys(pending.dishes).length) update.dishes = pending.dishes;
+      if (Object.keys(pending.snacks).length) update.snacks = pending.snacks;
+      try {
+        await setDoc(boardRef, update, { merge: true });
+        pending = { slots: {}, dishes: {}, snacks: {} };
+        setStatus("Saved, everyone will see this on their next refresh", "live");
+        // Pull latest so we also pick up anything others saved meanwhile
+        await loadBoard();
+      } catch(e){
+        console.error(e);
+        setStatus("Save failed: " + e.message, "offline");
       }
-      render();
-    };
+      btn.textContent = "Save changes";
+      updateSaveState();
+    });
 
-    setDish = function(id, val){
-      dishState[id] = val;
-      editingDish[id] = false;
-      saveField("dishes", id, val);
-      render();
-    };
-
-    setSnack = function(name, val){
-      snackState[name] = val;
-      saveField("snacks", name, val);
-    };
+    document.getElementById("refresh-btn").addEventListener("click", async function(){
+      if (hasPending() && !confirm("You have unsaved changes. Refresh will keep them, but overwrite everything else with the latest saved board. Continue?")){
+        return;
+      }
+      setStatus("Refreshing\u2026", "dirty");
+      await loadBoard();
+    });
 
     document.getElementById("reset-btn").addEventListener("click", async function(){
+      if (!confirm("Reset the whole board for everyone? This clears all saved picks.")) return;
       const slots = {};
       const dishes = {};
       const snacks = {};
@@ -546,33 +641,16 @@ async function initFirebase(){
       COUPLES.forEach(function(name){ snacks[name] = ""; });
       try {
         await setDoc(boardRef, { slots: slots, dishes: dishes, snacks: snacks }, { merge: false });
+        pending = { slots: {}, dishes: {}, snacks: {} };
+        await loadBoard();
+        updateSaveState();
       } catch(e){
         console.error(e);
-        setStatus("Offline, changes will not save: " + e.message, "offline");
+        setStatus("Reset failed: " + e.message, "offline");
       }
     });
 
-    onSnapshot(boardRef, function(snap){
-      const data = snap.exists() ? snap.data() : {};
-      const slots = data.slots || {};
-      const dishes = data.dishes || {};
-      const snacks = data.snacks || {};
-
-      slotIds.forEach(function(id){
-        state[id] = (id in slots) ? slots[id] : (MEAL_DEFAULTS[id] || "");
-        dishState[id] = dishes[id] || "";
-      });
-      COUPLES.forEach(function(name){
-        snackState[name] = snacks[name] || "";
-      });
-
-      setStatus("Live, synced with everyone", "live");
-      render();
-      renderSnacks();
-    }, function(err){
-      console.error(err);
-      setStatus("Offline, changes will not save: " + err.message, "offline");
-    });
+    await loadBoard();
 
   } catch (e) {
     console.error("Firebase failed to load", e);
@@ -581,6 +659,13 @@ async function initFirebase(){
 }
 
 initFirebase();
+
+window.addEventListener("beforeunload", function(e){
+  if (hasPending()){
+    e.preventDefault();
+    e.returnValue = "";
+  }
+});
 </script>
 </body>
 </html>
